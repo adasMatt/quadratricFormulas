@@ -75,10 +75,7 @@ struct ContentView: View {
         //Calculate the new plotting data and place in the plotDataModel
         calculator.PlotPlus()
         
-        
     }
-    
-
    
     
 }
