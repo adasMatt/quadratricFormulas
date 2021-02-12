@@ -1,6 +1,6 @@
 //
-//  quadratricFormulasApp.swift
-//  Shared
+//  App.swift
+//  quadratricFormulas
 //
 //  Created by Matthew Adas on 2/12/21.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct quadratricFormulasApp: App {
+struct ___PARENTPACKAGENAME:identifier___App: App {
     
     @StateObject var plotDataModel = PlotDataClass(fromLine: true)
     

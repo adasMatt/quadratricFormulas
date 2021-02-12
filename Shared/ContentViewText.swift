@@ -12,7 +12,7 @@ typealias plotDataType = [CPTScatterPlotField : Double]
 
 struct ContentView: View {
     @EnvironmentObject var plotDataModel :PlotDataClass
-    @ObservedObject private var calculator = CalculatePlotData()
+    @ObservedObject private var calculator = Calculator()
     @State var isChecked:Bool = false
     @State var tempInput = ""
   
@@ -51,7 +51,7 @@ struct ContentView: View {
             
             
             HStack{
-                Button("calculate", action: {self.calculate()} )
+                Button("text", action: {self.calculate()} )
                 .padding()
                 
             }
@@ -67,13 +67,13 @@ struct ContentView: View {
     /// Function accepts the command to start the calculation from the GUI
     func calculate(){
         
-        //var temp = 0.0
+        var temp = 0.0
         
         //pass the plotDataModel to the cosCalculator
         calculator.plotDataModel = self.plotDataModel
         
         //Calculate the new plotting data and place in the plotDataModel
-        calculator.PlotPlus()
+        temp = calculator.calculate()
         
         
     }
