@@ -2,8 +2,10 @@
 //  CalculatePlotData.swift
 //  SwiftUICorePlotExample
 //
-//  Created by Jeff Terry on 12/22/20.
+//  Created by Matt Adas.
 //
+
+//search "trying to plot just xPlusDiff part instead of the entire tuple now"
 
 import Foundation
 import SwiftUI
@@ -12,15 +14,15 @@ import CorePlot
 class CalculatePlotData: ObservableObject {
     
     var plotDataModel: PlotDataClass? = nil
-    var resultsTuple: (n: Double, xplus: Double, xPrimePlus: Double, xPlusError: Double, xsub: Double, xPrimeSub: Double, xSubError: Double) = (n: 0.0, xplus: 0.0, xPrimePlus: 0.0, xPlusError: 0.0, xsub: 0.0, xPrimeSub: 0.0, xSubError: 0.0)
     
-    var differences: [(n: Double, xplus: Double, xPrimePlus: Double, xPlusError: Double, xsub: Double, xPrimeSub: Double, xSubError: Double)] = []
-    //i think these two may not be useful where they currently are in quadraticFormulas
-    //var arrayXplusComparison = [String]()
-    //var arrayXsubComparison = [String]()
+    //resultsTuple is only one tuple with one value for each variable in it. It is calculated in a for loop w/ n = 1,2,3,...
+    var resultsTuple: (n: Double, xplus: Double, xPrimePlus: Double, xPlusDiff: Double, xsub: Double, xPrimeSub: Double, xSubDiff: Double) = (n: 0.0, xplus: 0.0, xPrimePlus: 0.0, xPlusDiff: 0.0, xsub: 0.0, xPrimeSub: 0.0, xSubDiff: 0.0)
     
-
-    func quadraticFormulas(a: Double, b: Double, c: Double) -> (xplus: Double, xPrimePlus: Double, xPlusError: Double, xsub: Double, xPrimeSub: Double, xSubError: Double){
+    //arrayOfResults is appended with each individual resultsTuple
+    var arrayOfResults: [(n: Double, xplus: Double, xPrimePlus: Double, xPlusDiff: Double, xsub: Double, xPrimeSub: Double, xSubDiff: Double)] = []
+    
+    //this function calculates all variations of the quadratic formula and takes the difference of x and x'
+    func quadraticFormulas(a: Double, b: Double, c: Double) -> (xplus: Double, xPrimePlus: Double, xPlusDiff: Double, xsub: Double, xPrimeSub: Double, xSubDiff: Double){
                 
         //the square root term is the same in all equations
         let xSqrtTerm = b * b - 4.0 * a * c
@@ -33,22 +35,18 @@ class CalculatePlotData: ObservableObject {
         let xPrimePlus = (-2.0 * c) / (b + xSqrtTerm.squareRoot())
         let xPrimeSub = (-2.0 * c) / (b - xSqrtTerm.squareRoot())
         
-        
-        
         //calculate difference between the two methods and store into array
         let plusDifference = abs(xplus-xPrimePlus)
         let subDifference = abs(xsub-xPrimeSub)
         
-        //I think these may not be useful
-        //arrayXplusComparison.append(String(differences[0]))
-        //arrayXsubComparison.append(String(differences[1]))
-        return (xplus: xplus, xPrimePlus: xPrimePlus, xPlusError: plusDifference, xsub: xsub, xPrimeSub: xPrimeSub, xSubError: subDifference)
+        //this return becomes returnTuple
+        return (xplus: xplus, xPrimePlus: xPrimePlus, xPlusDiff: plusDifference, xsub: xsub, xPrimeSub: xPrimeSub, xSubDiff: subDifference)
     }
     
     func PlotPlus() {
         //set the Plot Parameters
-        plotDataModel!.changingPlotParameters.yMax = 10.0
-        plotDataModel!.changingPlotParameters.yMin = -5.0
+        plotDataModel!.changingPlotParameters.yMax = 0.50
+        plotDataModel!.changingPlotParameters.yMin = -0.50
         plotDataModel!.changingPlotParameters.xMax = 10.0
         plotDataModel!.changingPlotParameters.xMin = -5.0
         plotDataModel!.changingPlotParameters.xLabel = "n"
@@ -63,28 +61,33 @@ class CalculatePlotData: ObservableObject {
         
             let cInLoop = pow(10.0, -Double(n))
 
-            let returnTuple: (xplus: Double, xPrimePlus: Double, xPlusError: Double, xsub: Double, xPrimeSub: Double, xSubError: Double) = quadraticFormulas(a: 1.0, b: 1.0, c: cInLoop)
+            //returnTuple just gives one value for each variable to the resultsTuple
+            let returnTuple: (xplus: Double, xPrimePlus: Double, xPlusDiff: Double, xsub: Double, xPrimeSub: Double, xSubDiff: Double) = quadraticFormulas(a: 1.0, b: 1.0, c: cInLoop)
             
+            //could I not skip resultsTuple completely and just append returnTuple to arrayOfResults?
             resultsTuple.n = Double(n)
             resultsTuple.xplus = returnTuple.xplus
             resultsTuple.xPrimePlus = returnTuple.xPrimePlus
-            resultsTuple.xPlusError = returnTuple.xPlusError
+            resultsTuple.xPlusDiff = returnTuple.xPlusDiff
             resultsTuple.xsub = returnTuple.xsub
             resultsTuple.xPrimeSub = returnTuple.xPrimeSub
-            resultsTuple.xSubError = returnTuple.xSubError
+            resultsTuple.xSubDiff = returnTuple.xSubDiff
             
-            differences.append(resultsTuple)
+            arrayOfResults.append(resultsTuple)
     
             //ok this should plot x - x' for the positive square root
-            let dataPoint: plotDataType = [.X: Double(n), .Y: resultsTuple.n]
+            //trying to plot just xPlusDiff part instead of the entire tuple now
+            
+            //what if I scale xPlusDiff by e17 since the values are on the order of e-17 and smaller?
+            let dataPoint: plotDataType = [.X: Double(n), .Y: resultsTuple.xPlusDiff * pow(10.0, 17.0)]
             plotData.append(contentsOf: [dataPoint])
         
-            plotDataModel!.calculatedText += "\(Double(n))\t\(differences[n-1])\n"
+            plotDataModel!.calculatedText += "\(Double(n))\t\(arrayOfResults[n-1])\n"
         
-            
+            //print("I'm so cool and I should be plotting y = \(resultsTuple.xPlusDiff * pow(10.0, 17.0)) (scaled by 10^17) and x = \(n)")
         }
         
-        print(differences)
+        //print(arrayOfResults)
     }
     
     func PlotSub() {
@@ -103,15 +106,15 @@ class CalculatePlotData: ObservableObject {
         
         for n in 1..<11 {
         
-            let cInLoop = pow(10.0, -Double(n))
+            //let cInLoop = pow(10.0, -Double(n))
 
-            quadraticFormulas(a: 1.0, b: 1.0, c: cInLoop)
+            //quadraticFormulas(a: 1.0, b: 1.0, c: cInLoop)
     
             //ok this should plot x - x' for the positive square root
             let dataPoint: plotDataType = [.X: Double(n), .Y: 1.0]
             plotData.append(contentsOf: [dataPoint])
         
-            plotDataModel!.calculatedText += "\(Double(n))\t\(differences[1])\n"
+            plotDataModel!.calculatedText += "\(Double(n))\t\(arrayOfResults[1])\n"
         
         }
     }
